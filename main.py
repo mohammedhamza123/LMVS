@@ -406,6 +406,99 @@ async def test_api():
         "endpoint": "/api/v1/test"
     }
 
+@app.get("/api/v1/test/fcm")
+async def test_fcm():
+    """اختبار حالة خدمة FCM"""
+    try:
+        from app.services.fcm_service import FCMService
+        status = FCMService.get_status()
+        
+        # معلومات إضافية للتشخيص
+        import os
+        from pathlib import Path
+        
+        diagnostic_info = {
+            "current_working_directory": str(Path.cwd()),
+            "fcm_service_account_path_env": os.getenv("FCM_SERVICE_ACCOUNT_PATH"),
+            "fcm_service_account_json_env_set": bool(os.getenv("FCM_SERVICE_ACCOUNT_JSON")),
+            "checked_paths": []
+        }
+        
+        # فحص المسارات المحتملة
+        possible_paths = [
+            "app/services/service-account.json",
+            "./app/services/service-account.json",
+            "/app/services/service-account.json",
+            os.path.join(os.path.dirname(__file__), "app", "services", "service-account.json"),
+        ]
+        
+        for path_str in possible_paths:
+            path_obj = Path(path_str)
+            exists = path_obj.exists()
+            abs_path = str(path_obj.absolute()) if exists else None
+            diagnostic_info["checked_paths"].append({
+                "path": path_str,
+                "exists": exists,
+                "absolute_path": abs_path
+            })
+        
+        return {
+            "status": "success" if status["initialized"] else "error",
+            "fcm_status": status,
+            "diagnostic_info": diagnostic_info,
+            "message": "خدمة FCM مهيأة بشكل صحيح" if status["initialized"] else "خدمة FCM غير مهيأة - يرجى التحقق من إعدادات Service Account",
+            "recommendations": [] if status["initialized"] else [
+                "تأكد من وجود ملف service-account.json في app/services/",
+                "أو أضف متغير بيئة FCM_SERVICE_ACCOUNT_JSON بمحتوى JSON",
+                "أو أضف متغير بيئة FCM_SERVICE_ACCOUNT_PATH بمسار الملف"
+            ]
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": f"خطأ في فحص خدمة FCM: {str(e)}",
+            "traceback": traceback.format_exc()
+        }
+
+@app.post("/api/v1/test/fcm/send")
+async def test_fcm_send(fcm_token: str, title: str = "اختبار إشعار", body: str = "هذا إشعار تجريبي"):
+    """اختبار إرسال إشعار فعلي عبر FCM"""
+    try:
+        from app.services.fcm_service import FCMService
+        
+        if not FCMService.is_initialized():
+            return {
+                "status": "error",
+                "message": "خدمة FCM غير مهيأة - يرجى التحقق من إعدادات Service Account"
+            }
+        
+        if not fcm_token:
+            return {
+                "status": "error",
+                "message": "رمز FCM مطلوب"
+            }
+        
+        result = FCMService.send_notification(
+            fcm_token=fcm_token,
+            title=title,
+            body=body,
+            data={"test": "true", "type": "test_notification"}
+        )
+        
+        return {
+            "status": "success" if result else "error",
+            "message": "تم إرسال الإشعار بنجاح" if result else "فشل إرسال الإشعار - تحقق من السجلات",
+            "fcm_token_received": fcm_token[:30] + "..." if len(fcm_token) > 30 else fcm_token
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": f"خطأ في إرسال الإشعار: {str(e)}",
+            "traceback": traceback.format_exc()
+        }
+
 if __name__ == "__main__":
     import uvicorn
     # للتطوير: استخدام reload=True
