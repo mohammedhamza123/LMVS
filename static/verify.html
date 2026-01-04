@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فحص الرخصة - نظام إدارة رخص السيارات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #1e40af;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,0.22), transparent 60%),
+                        radial-gradient(900px 540px at 80% 80%, rgba(255,255,255,0.18), transparent 55%),
+                        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .verify-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        .verify-card {
+            width: 100%;
+            max-width: 980px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(16px);
+            border-radius: 22px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            overflow: hidden;
+        }
+
+        .verify-topbar {
+            padding: 22px 22px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(30,64,175,0.10), rgba(59,130,246,0.06));
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 24px rgba(30,64,175,0.25);
+        }
+
+        .brand-title {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .brand-title h1 {
+            font-size: 18px;
+            margin: 0;
+            color: var(--text-primary);
+            font-weight: 900;
+        }
+
+        .brand-title p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.8);
+        }
+
+        .pill code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 11px;
+        }
+
+        .btn {
+            border: 1px solid rgba(0,0,0,0.10);
+            background: #fff;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform .15s ease, box-shadow .15s ease;
+            text-decoration: none;
+        }
+
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0,0,0,0.10); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+            color: #fff;
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .verify-body {
+            padding: 18px 22px 22px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.4fr 0.6fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .hero-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .hero-name {
+            font-size: 20px;
+            font-weight: 900;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .hero-sub {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .status-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .status-valid { background: rgba(16,185,129,0.14); color: #065f46; }
+        .status-expired { background: rgba(239,68,68,0.12); color: #991b1b; }
+
+        .kv {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 14px;
+            margin-top: 14px;
+        }
+
+        .kv-item {
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .kv-item .k {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kv-item .v {
+            margin-top: 6px;
+            color: var(--text-primary);
+            font-weight: 900;
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .section {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 14px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .section-title h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title .meta {
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .violation-item {
+            border: 1px solid rgba(239,68,68,0.18);
+            background: rgba(239,68,68,0.07);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .violation-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .violation-type {
+            font-weight: 900;
+            color: #7f1d1d;
+        }
+
+        .violation-fine {
+            font-weight: 900;
+            color: #991b1b;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(0,0,0,0.06);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .violation-desc {
+            color: #7f1d1d;
+            opacity: 0.9;
+            line-height: 1.5;
+            font-weight: 600;
+            margin: 0 0 6px;
+        }
+
+        .violation-meta {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            border: 1px dashed rgba(16,185,129,0.30);
+            background: rgba(16,185,129,0.08);
+            color: #065f46;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .error-state {
+            border: 1px solid rgba(239,68,68,0.25);
+            background: rgba(239,68,68,0.08);
+            color: #991b1b;
+            border-radius: 16px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .loading-skeleton {
+            animation: shimmer 1.2s linear infinite;
+            background: linear-gradient(90deg, rgba(226,232,240,0.55) 0%, rgba(226,232,240,0.85) 50%, rgba(226,232,240,0.55) 100%);
+            background-size: 200% 100%;
+            border-radius: 12px;
+            height: 14px;
+            margin-top: 10px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        @media (max-width: 860px) {
+            .hero { grid-template-columns: 1fr; }
+            .kv { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-shell">
+        <div class="verify-card">
+            <div class="verify-topbar">
+                <div class="brand">
+                    <div class="brand-icon"><i class="fas fa-shield-check"></i></div>
+                    <div class="brand-title">
+                        <h1>فحص الرخصة</h1>
+                        <p id="loading-message">جاري التحقق من الرخصة...</p>
+                    </div>
+                </div>
+                <div class="top-actions">
+                    <span class="pill"><i class="fas fa-barcode"></i> <code id="barcode-text">-</code></span>
+                    <button class="btn" id="copy-barcode-btn" type="button" style="display:none">
+                        <i class="fas fa-copy"></i> نسخ
+                    </button>
+                    <button class="btn btn-primary" id="refresh-btn" type="button">
+                        <i class="fas fa-rotate"></i> تحديث
+                    </button>
+                </div>
+            </div>
+
+            <div class="verify-body">
+                <div id="state-loading">
+                    <div class="hero">
+                        <div class="hero-card">
+                            <div class="loading-skeleton" style="width: 55%"></div>
+                            <div class="loading-skeleton" style="width: 78%"></div>
+                            <div class="loading-skeleton" style="width: 46%"></div>
+                        </div>
+                        <div class="hero-card">
+                            <div class="loading-skeleton" style="width: 80%"></div>
+                            <div class="loading-skeleton" style="width: 60%"></div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="loading-skeleton" style="width: 40%"></div>
+                        <div class="loading-skeleton" style="width: 90%"></div>
+                        <div class="loading-skeleton" style="width: 84%"></div>
+                    </div>
+                </div>
+
+                <div id="state-error" class="error-state" style="display:none"></div>
+
+                <div id="state-ready" style="display:none">
+                    <div class="hero">
+                        <div class="hero-card">
+                            <div class="hero-main">
+                                <div>
+                                    <h2 class="hero-name" id="license-full-name">-</h2>
+                                    <p class="hero-sub" id="license-subtitle">-</p>
+                                </div>
+                                <div>
+                                    <span id="license-status" class="status-badge status-valid">
+                                        <i class="fas fa-check-circle"></i> سارية
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="kv">
+                                <div class="kv-item">
+                                    <div class="k"><i class="fas fa-id-card"></i> رقم الرخصة</div>
+                                    <div class="v" id="license-number">-</div>
+                                </div>
+                                <div class="kv-item">
+                                    <div class="k"><i class="fas fa-car"></i> نوع الرخصة</div>
+                                    <div class="v" id="license-type">-</div>
+                                </div>
+                                <div class="kv-item">
+                                    <div class="k"><i class="fas fa-calendar-check"></i> تاريخ الإصدار</div>
+                                    <div class="v" id="issued-date">-</div>
+                                </div>
+                                <div class="kv-item">
+                                    <div class="k"><i class="fas fa-calendar-xmark"></i> تاريخ الانتهاء</div>
+                                    <div class="v" id="expiry-date">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hero-card">
+                            <div class="section-title" style="margin-bottom: 10px">
+                                <h3><i class="fas fa-notes-medical"></i> معلومات مهمة</h3>
+                            </div>
+                            <div class="kv" style="grid-template-columns: 1fr; margin-top: 0">
+                                <div class="kv-item">
+                                    <div class="k"><i class="fas fa-stethoscope"></i> مرض مزمن</div>
+                                    <div class="v" id="chronic-disease">-</div>
+                                </div>
+                                <div class="kv-item">
+                                    <div class="k"><i class="fas fa-user"></i> أقرب شخص</div>
+                                    <div class="v" id="emergency-name">-</div>
+                                </div>
+                                <div class="kv-item">
+                                    <div class="k"><i class="fas fa-phone"></i> رقم أقرب شخص</div>
+                                    <div class="v" id="emergency-phone">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">
+                            <h3><i class="fas fa-triangle-exclamation"></i> المخالفات</h3>
+                            <div class="meta" id="violations-meta">-</div>
+                        </div>
+                        <div id="violations-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const els = {
+            loadingMessage: document.getElementById('loading-message'),
+            barcodeText: document.getElementById('barcode-text'),
+            copyBtn: document.getElementById('copy-barcode-btn'),
+            refreshBtn: document.getElementById('refresh-btn'),
+
+            stateLoading: document.getElementById('state-loading'),
+            stateReady: document.getElementById('state-ready'),
+            stateError: document.getElementById('state-error'),
+
+            fullName: document.getElementById('license-full-name'),
+            subtitle: document.getElementById('license-subtitle'),
+            status: document.getElementById('license-status'),
+            licenseNumber: document.getElementById('license-number'),
+            licenseType: document.getElementById('license-type'),
+            issuedDate: document.getElementById('issued-date'),
+            expiryDate: document.getElementById('expiry-date'),
+
+            chronicDisease: document.getElementById('chronic-disease'),
+            emergencyName: document.getElementById('emergency-name'),
+            emergencyPhone: document.getElementById('emergency-phone'),
+
+            violationsMeta: document.getElementById('violations-meta'),
+            violationsContent: document.getElementById('violations-content'),
+        };
+
+        function getBarcodeFromPath() {
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            return parts[parts.length - 1] || '';
+        }
+
+        const barcode = getBarcodeFromPath();
+        els.barcodeText.textContent = barcode || '-';
+
+        if (barcode) {
+            els.copyBtn.style.display = 'inline-flex';
+            els.copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(barcode);
+                    els.copyBtn.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
+                    setTimeout(() => (els.copyBtn.innerHTML = '<i class="fas fa-copy"></i> نسخ'), 1200);
+                } catch (_) {
+                    // ignore
+                }
+            });
+        }
+
+        els.refreshBtn.addEventListener('click', () => loadLicenseData());
+
+        function showLoading() {
+            els.stateLoading.style.display = 'block';
+            els.stateReady.style.display = 'none';
+            els.stateError.style.display = 'none';
+            els.loadingMessage.textContent = 'جاري التحقق من الرخصة...';
+        }
+
+        function showError(message) {
+            els.stateLoading.style.display = 'none';
+            els.stateReady.style.display = 'none';
+            els.stateError.style.display = 'block';
+            els.loadingMessage.textContent = 'تعذر التحقق';
+            els.stateError.innerHTML = `
+                <div style="font-size:44px; margin-bottom: 10px;"><i class="fas fa-circle-xmark"></i></div>
+                <div style="font-weight: 900; font-size: 16px; margin-bottom: 6px;">${message}</div>
+                <div style="color: rgba(153, 27, 27, 0.85); font-weight: 700;">تحقق من صحة الباركود وحاول مرة أخرى.</div>
+                <div style="margin-top: 14px;">
+                    <button class="btn btn-primary" type="button" onclick="loadLicenseData()">
+                        <i class="fas fa-rotate"></i> إعادة المحاولة
+                    </button>
+                </div>
+            `;
+        }
+
+        function showReady() {
+            els.stateLoading.style.display = 'none';
+            els.stateError.style.display = 'none';
+            els.stateReady.style.display = 'block';
+        }
+
+        function fmtDate(d) {
+            if (!d) return '-';
+            try { return new Date(d).toLocaleDateString('ar-LY'); } catch (_) { return '-'; }
+        }
+
+        function safeText(x, fallback='-') {
+            if (x === null || x === undefined) return fallback;
+            const s = String(x).trim();
+            return s.length ? s : fallback;
+        }
+
+        // تحميل بيانات الرخصة
+        async function loadLicenseData() {
+            showLoading();
+            if (!barcode) {
+                showError('باركود غير موجود في الرابط');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/licenses/verify/${barcode}`);
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || 'الرخصة غير موجودة');
+                }
+
+                const data = await response.json();
+                const license = data.license || {};
+
+                els.loadingMessage.textContent = 'تم التحقق من الرخصة';
+
+                els.fullName.textContent = safeText(license.full_name, '—');
+                els.subtitle.textContent = `رقم الرخصة: ${safeText(license.license_number, 'N/A')} • نوع: ${getLicenseTypeName(license.license_type)}`;
+
+                const expired = !!license.is_expired;
+                els.status.className = `status-badge ${expired ? 'status-expired' : 'status-valid'}`;
+                els.status.innerHTML = expired
+                    ? '<i class="fas fa-circle-xmark"></i> منتهية'
+                    : '<i class="fas fa-circle-check"></i> سارية';
+
+                els.licenseNumber.textContent = safeText(license.license_number, 'N/A');
+                els.licenseType.textContent = getLicenseTypeName(license.license_type);
+                els.issuedDate.textContent = fmtDate(license.issued_date);
+                els.expiryDate.textContent = fmtDate(license.expiry_date);
+
+                els.chronicDisease.textContent = safeText(license.chronic_disease, 'لا يوجد');
+                els.emergencyName.textContent = safeText(license.emergency_contact_name, 'غير محدد');
+                els.emergencyPhone.textContent = safeText(license.emergency_contact_phone, 'غير محدد');
+
+                // Violations
+                const count = Number(data.violations_count || 0);
+                els.violationsMeta.textContent = count ? `عدد المخالفات: ${count}` : 'لا توجد مخالفات';
+
+                if (!data.has_violations) {
+                    els.violationsContent.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 34px; margin-bottom: 6px;"><i class="fas fa-shield-heart"></i></div>
+                            لا توجد مخالفات مسجلة على هذه الرخصة
+                        </div>
+                    `;
+                } else {
+                    els.violationsContent.innerHTML = `
+                        <div class="pill" style="margin-bottom: 10px; border-color: rgba(245, 158, 11, 0.35); background: rgba(245,158,11,0.10); color: #7c2d12;">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            يوجد ${count} مخالفة غير مدفوعة
+                        </div>
+                    `;
+
+                    (data.violations || []).forEach(v => {
+                        const violationDate = v.violation_date ? new Date(v.violation_date).toLocaleDateString('ar-LY') : '-';
+                        const block = document.createElement('div');
+                        block.className = 'violation-item';
+                        block.innerHTML = `
+                            <div class="violation-head">
+                                <div class="violation-type">${safeText(v.violation_type, 'مخالفة')}</div>
+                                <div class="violation-fine">${safeText(v.fine_amount, '0')} دينار</div>
+                            </div>
+                            <p class="violation-desc">${safeText(v.description, '')}</p>
+                            <div class="violation-meta">تاريخ المخالفة: ${violationDate}</div>
+                        `;
+                        els.violationsContent.appendChild(block);
+                    });
+                }
+
+                showReady();
+            } catch (error) {
+                showError(error.message || 'حدث خطأ أثناء الاتصال');
+            }
+        }
+
+        function getLicenseTypeName(type) {
+            const typeNames = {
+                'private': 'خصوصي',
+                'public': 'عمومي',
+                'motorcycle': 'دراجة نارية',
+                'truck': 'شاحنة',
+                'bus': 'حافلة'
+            };
+            return typeNames[type] || type;
+        }
+
+        // تحميل البيانات عند فتح الصفحة
+        loadLicenseData();
+    </script>
+</body>
+</html>
+
