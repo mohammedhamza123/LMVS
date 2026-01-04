@@ -345,11 +345,25 @@ def create_default_admin():
 create_default_admin()
 
 # تهيئة خدمة FCM
+print("=" * 60)
+print("Initializing FCM Service...")
+print("=" * 60)
 try:
     from app.services.fcm_service import FCMService
     FCMService.initialize()
+    if FCMService.is_initialized():
+        print("=" * 60)
+        print("✅ FCM Service is ready!")
+        print("=" * 60)
+    else:
+        print("=" * 60)
+        print("❌ FCM Service initialization failed. Check logs above for details.")
+        print("=" * 60)
 except Exception as e:
-    print(f"⚠️ Warning: Failed to initialize FCM service: {e}")
+    print(f"⚠️ CRITICAL: Failed to import or initialize FCM service: {e}")
+    import traceback
+    print(traceback.format_exc())
+    print("=" * 60)
 
 app = FastAPI(
     title="نظام إدارة رخص السيارات والمخالفات",
@@ -458,6 +472,31 @@ async def test_fcm():
         return {
             "status": "error",
             "message": f"خطأ في فحص خدمة FCM: {str(e)}",
+            "traceback": traceback.format_exc()
+        }
+
+@app.post("/api/v1/test/fcm/reinitialize")
+async def reinitialize_fcm():
+    """إعادة تهيئة خدمة FCM يدوياً"""
+    try:
+        from app.services.fcm_service import FCMService
+        
+        # إعادة التهيئة
+        FCMService.initialize()
+        
+        # الحصول على الحالة بعد إعادة التهيئة
+        status = FCMService.get_status()
+        
+        return {
+            "status": "success" if status["initialized"] else "error",
+            "message": "تم إعادة تهيئة خدمة FCM بنجاح" if status["initialized"] else "فشلت إعادة تهيئة خدمة FCM",
+            "fcm_status": status
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": f"خطأ في إعادة تهيئة خدمة FCM: {str(e)}",
             "traceback": traceback.format_exc()
         }
 

@@ -21,19 +21,28 @@ class FCMService:
     @staticmethod
     def initialize():
         """تهيئة خدمة FCM - يجب استدعاؤها عند بدء التطبيق"""
+        print("🔧 Starting FCM Service initialization...")
         try:
             # الطريقة 1: قراءة Service Account من متغير البيئة مباشرة (JSON string)
             # مفيد للاستضافة حيث يمكن حفظ JSON كمتغير بيئة
             fcm_json_env = os.getenv("FCM_SERVICE_ACCOUNT_JSON")
             if fcm_json_env:
+                print("📋 Found FCM_SERVICE_ACCOUNT_JSON environment variable")
                 try:
                     FCMService.SERVICE_ACCOUNT_DATA = json.loads(fcm_json_env)
                     FCMService.PROJECT_ID = FCMService.SERVICE_ACCOUNT_DATA.get('project_id')
-                    FCMService.IS_INITIALIZED = True
-                    print(f"✓ FCM Service initialized from environment variable with project: {FCMService.PROJECT_ID}")
-                    return
+                    if FCMService.PROJECT_ID:
+                        FCMService.IS_INITIALIZED = True
+                        print(f"✓ FCM Service initialized from environment variable with project: {FCMService.PROJECT_ID}")
+                        return
+                    else:
+                        print("⚠️ Error: project_id not found in FCM_SERVICE_ACCOUNT_JSON")
                 except json.JSONDecodeError as e:
                     print(f"⚠️ Error: FCM_SERVICE_ACCOUNT_JSON is not valid JSON: {e}")
+                except Exception as e:
+                    print(f"⚠️ Error parsing FCM_SERVICE_ACCOUNT_JSON: {e}")
+            else:
+                print("ℹ️ FCM_SERVICE_ACCOUNT_JSON environment variable not set, trying file paths...")
             
             # الطريقة 2: قراءة من ملف
             # الحصول على مسار Service Account من متغير البيئة
@@ -46,35 +55,47 @@ class FCMService:
             
             fcm_path_env = os.getenv("FCM_SERVICE_ACCOUNT_PATH")
             if fcm_path_env:
+                print(f"📋 Found FCM_SERVICE_ACCOUNT_PATH environment variable: {fcm_path_env}")
                 default_paths.insert(0, fcm_path_env)
             
+            print(f"🔍 Checking {len(default_paths)} possible file paths...")
             service_account_file = None
+            current_dir = Path.cwd()
+            print(f"📂 Current working directory: {current_dir}")
+            
             for path_str in default_paths:
                 path_obj = Path(path_str)
                 # محاولة مسار نسبي ومطلق
                 if path_obj.exists():
                     service_account_file = path_obj
                     FCMService.SERVICE_ACCOUNT_PATH = str(path_obj.absolute())
+                    print(f"✓ Found Service Account file at: {FCMService.SERVICE_ACCOUNT_PATH}")
                     break
                 # محاولة مسار مطلق
                 abs_path = Path(path_str).absolute()
                 if abs_path.exists():
                     service_account_file = abs_path
                     FCMService.SERVICE_ACCOUNT_PATH = str(abs_path)
+                    print(f"✓ Found Service Account file at: {FCMService.SERVICE_ACCOUNT_PATH}")
                     break
+                else:
+                    print(f"  ✗ Not found: {path_str} (absolute: {abs_path})")
             
             if not service_account_file:
-                print(f"⚠️ Warning: Service Account file not found in any of these paths:")
+                print(f"⚠️ ERROR: Service Account file not found in any of these paths:")
                 for p in default_paths:
-                    print(f"   - {p}")
-                print("💡 Options:")
+                    abs_p = Path(p).absolute()
+                    print(f"   - {p} (absolute: {abs_p})")
+                print("💡 Solutions:")
                 print("   1. Set FCM_SERVICE_ACCOUNT_JSON environment variable with the full JSON content")
                 print("   2. Set FCM_SERVICE_ACCOUNT_PATH environment variable with the file path")
                 print("   3. Place service-account.json in app/services/ directory")
+                print(f"   4. Current working directory is: {current_dir}")
                 FCMService.IS_INITIALIZED = False
                 return
             
             try:
+                print(f"📖 Reading Service Account file: {service_account_file}")
                 # قراءة Project ID من ملف Service Account
                 with open(service_account_file, 'r', encoding='utf-8') as f:
                     FCMService.SERVICE_ACCOUNT_DATA = json.load(f)
@@ -82,17 +103,35 @@ class FCMService:
                 
                 if FCMService.PROJECT_ID:
                     FCMService.IS_INITIALIZED = True
-                    print(f"✓ FCM Service initialized from file: {FCMService.SERVICE_ACCOUNT_PATH}")
+                    print(f"✓ FCM Service initialized successfully from file: {FCMService.SERVICE_ACCOUNT_PATH}")
                     print(f"✓ Project ID: {FCMService.PROJECT_ID}")
                 else:
-                    print("⚠️ Warning: Could not read project_id from Service Account file")
+                    print("⚠️ ERROR: Could not read project_id from Service Account file")
+                    print(f"⚠️ File content keys: {list(FCMService.SERVICE_ACCOUNT_DATA.keys()) if FCMService.SERVICE_ACCOUNT_DATA else 'None'}")
                     FCMService.IS_INITIALIZED = False
+            except json.JSONDecodeError as e:
+                print(f"⚠️ ERROR: Service Account file is not valid JSON: {e}")
+                print(f"⚠️ File path: {service_account_file}")
+                FCMService.IS_INITIALIZED = False
+            except PermissionError as e:
+                print(f"⚠️ ERROR: Permission denied reading Service Account file: {e}")
+                print(f"⚠️ File path: {service_account_file}")
+                FCMService.IS_INITIALIZED = False
             except Exception as e:
-                print(f"⚠️ Error reading Service Account file: {e}")
+                print(f"⚠️ ERROR reading Service Account file: {e}")
+                import traceback
+                print(f"⚠️ Traceback: {traceback.format_exc()}")
                 FCMService.IS_INITIALIZED = False
         except Exception as e:
-            print(f"⚠️ Error initializing FCM service: {e}")
+            print(f"⚠️ ERROR initializing FCM service: {e}")
+            import traceback
+            print(f"⚠️ Traceback: {traceback.format_exc()}")
             FCMService.IS_INITIALIZED = False
+        
+        if not FCMService.IS_INITIALIZED:
+            print("❌ FCM Service initialization FAILED. Notifications will not work.")
+        else:
+            print("✅ FCM Service initialization COMPLETED successfully.")
     
     @staticmethod
     def is_initialized() -> bool:
