@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Firebase Service Account
+app/services/service-account.json
+**/service-account*.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (ملفات المستخدمين المرفوعة)
+uploads/documents/*
+uploads/photos/*
+!uploads/documents/.gitkeep
+!uploads/photos/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Windows batch files (محلية للتطوير)
+*.bat
+!pythonanywhere_setup.sh
+
+# Local shell scripts (محلية للتطوير)
+start.sh
+
+# Migration scripts (يمكن الاحتفاظ بها أو حذفها حسب الحاجة)
+# migrate_*.py
